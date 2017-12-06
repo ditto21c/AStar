@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -15,19 +16,21 @@ struct Tile
 vector<Tile> Tiles;
 vector<int> OpenList;
 vector<int> ClosedList;
+vector<int> Paths;
 int g_StartPos = 0, g_EndPos = 0;
+int TileSize = 10;
 
-int CalcuGoal(int StandardPos, int GoalPos)
+int CalcuGoal(int StandardPos, int OpenPos)
 {
-	return Tiles[StandardPos].Fitness + (abs(Tiles[StandardPos].PosX - Tiles[GoalPos].PosX) + abs(Tiles[StandardPos].PosX - Tiles[GoalPos].PosX));
+	return Tiles[StandardPos].Fitness + (abs(Tiles[StandardPos].PosX - Tiles[OpenPos].PosX) + abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY));
 }
 
-int CalcuHeuristic(int CurPos, int EndPos)
+int CalcuHeuristic(int OpenPos, int EndPos)
 {
-	return (Tiles[EndPos].PosX - Tiles[CurPos].PosX) + (Tiles[EndPos].PosY - Tiles[CurPos].PosY);
+	return (Tiles[EndPos].PosX - Tiles[OpenPos].PosX) + (Tiles[EndPos].PosY - Tiles[OpenPos].PosY);
 }
 
-void PushOpenList(int OpenPos, int StandardPos)
+void PushOpenList(int StandardPos, int OpenPos)
 {
 	vector<int>::iterator findClose = std::find(ClosedList.begin(), ClosedList.end(), OpenPos);
 	if (findClose == ClosedList.end())
@@ -47,25 +50,39 @@ void MakeOpenList(int StandardPos)
 {
 	for (int i = 0; i < 3; ++i)
 	{
-		int OpenPos = StandardPos - 11 + i;
-		PushOpenList(OpenPos, StandardPos);
+		int OpenPos = StandardPos - (TileSize+1) + i;
+		PushOpenList(StandardPos, OpenPos);
 	}
 
-	PushOpenList(StandardPos - 1, StandardPos);
-	PushOpenList(StandardPos + 1, StandardPos);
+	PushOpenList(StandardPos, StandardPos - 1);
+	PushOpenList(StandardPos, StandardPos + 1);
 
 	for (int i = 0; i < 3; ++i)
 	{
-		int OpenPos = StandardPos + 9 + i;
-		PushOpenList(OpenPos, StandardPos);
+		int OpenPos = StandardPos + (TileSize-1) + i;
+		PushOpenList(StandardPos, OpenPos);
 	}
+}
+
+int FindNextPathFromOpenList()
+{
+	int FindPath = 0;
+	int FindFitness = 0;
+	for (int CurIndex : OpenList)
+	{
+		if (Tiles[CurIndex].Fitness < FindFitness)
+		{
+
+		}
+	}
+		
 }
 
 void main()
 {
-	for (int y = 0; y < 10; ++y)
+	for (int y = 0; y < TileSize; ++y)
 	{
-		for (int x = 0; x < 100; ++x)
+		for (int x = 0; x < TileSize; ++x)
 		{
 			Tile tile;
 			tile.PosX = x;
@@ -81,9 +98,14 @@ void main()
 	cin >> g_EndPos;
 
 	ClosedList.push_back(g_StartPos);
-	Tiles[g_StartPos].Goal = CalcuGoal(g_StartPos, g_StartPos);
+	Tiles[g_StartPos].Goal = 0;
 	Tiles[g_StartPos].Heuristic = CalcuHeuristic(g_StartPos, g_EndPos);
-	Tiles[g_StartPos].Fitness = Tiles[g_StartPos].Goal + Tiles[g_StartPos].Heuristic;
+	Tiles[g_StartPos].Fitness = Tiles[g_StartPos].Heuristic;
+
+	while (1)
+	{
+
+	}
 
 
 
