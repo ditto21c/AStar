@@ -45,6 +45,7 @@ vector<int> PushOpenList(int StandardPos, int OpenPos)
 		vector<int>::iterator findOpen = std::find(OpenList.begin(), OpenList.end(), OpenPos);
 		if (findOpen == OpenList.end())
 		{
+
 			OpenList.push_back(OpenPos);
 			Tiles[OpenPos].Goal = CalcuGoal(StandardPos, OpenPos);
 			Tiles[OpenPos].Heuristic = CalcuHeuristic(OpenPos, g_EndPos);
@@ -69,11 +70,19 @@ vector<int> MakeOpenList(int StandardPos)
 			float YGap = abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY);
 			if (XGap < 2.0f && YGap < 2.0f)
 			{
+				if (0 == i)
+				{
+					if(Tiles[OpenPos +1].bBlock || Tiles[OpenPos + TileSize].bBlock)
+						continue;
+				}
+				else if (2 == i)
+				{
+					if (Tiles[OpenPos - 1].bBlock || Tiles[OpenPos + TileSize].bBlock)
+						continue;
+				}
 				vector<int> OpenList = PushOpenList(StandardPos, OpenPos);
 				for (int index : OpenList)
 					MakedOpenList.push_back(index);
-				
-				
 			}
 		}
 	}
@@ -114,6 +123,17 @@ vector<int> MakeOpenList(int StandardPos)
 			float YGap = abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY);
 			if (XGap < 2.0f && YGap < 2.0f)
 			{
+				if (0 == i)
+				{
+					if (Tiles[OpenPos + 1].bBlock || Tiles[OpenPos - TileSize].bBlock)
+						continue;
+				}
+				else if (2 == i)
+				{
+					if (Tiles[OpenPos - 1].bBlock || Tiles[OpenPos - TileSize].bBlock)
+						continue;
+				}
+
 				vector<int> OpenList = PushOpenList(StandardPos, OpenPos);
 				for (int index : OpenList)
 					MakedOpenList.push_back(index);
@@ -192,62 +212,70 @@ void main()
 			tile.PosY = (float)y;
 
 			if (y != 0 && y != 5 && y != 10 && x == 5)
-			{
 				tile.bBlock = true;
-				ClosedList.push_back(TileSize*y + x);
-			}
 
 			Tiles.push_back(tile);
 		}
 	}
 
 	ShowTile();
-	
-	std::cout << "Select Start Position : " << endl;
-	cin >> g_StartPos;
 
-	std::cout << "Select End Position : " << endl;
-	cin >> g_EndPos;
-
-	ClosedList.push_back(g_StartPos);
-	Tiles[g_StartPos].Goal = 0;
-	Tiles[g_StartPos].Heuristic = CalcuHeuristic(g_StartPos, g_EndPos);
-	Tiles[g_StartPos].Fitness = Tiles[g_StartPos].Heuristic;
-
-	int FindNextPath = g_StartPos;
-
-	while (1) 
-	{
-		vector<int> MakedOpenList = MakeOpenList(FindNextPath);
-		if (0 < MakedOpenList.size())
-		{
-			FindNextPath = FindNextPathIndex(MakedOpenList);
-		}
-		else
-		{
-			FindNextPath = FindNextPathIndexFromOpenList();
-		}
-
-		if (FindNextPath == g_EndPos)
-			break;
-
-		std::remove(OpenList.begin(), OpenList.end(), FindNextPath);
-		ClosedList.push_back(FindNextPath);
-	}
-
-
-	int path_index = g_EndPos;
-	Paths.push_back(g_EndPos);
 	while (1)
 	{
-		if (path_index == g_StartPos)
+		ClosedList.clear();
+		OpenList.clear();
+		Paths.clear();
+
+		for (Tile tile : Tiles)
 		{
-			break;
+			if (tile.bBlock)
+			{
+				ClosedList.push_back(TileSize * (int)tile.PosY + (int)tile.PosX);
+			}
+		}
+	
+		std::cout << "Select Start Position : " << endl;
+		cin >> g_StartPos;
+
+		std::cout << "Select End Position : " << endl;
+		cin >> g_EndPos;
+
+		ClosedList.push_back(g_StartPos);
+		int FindNextPath = g_StartPos;
+
+		while (1)
+		{
+			vector<int> MakedOpenList = MakeOpenList(FindNextPath);
+			if (0 < MakedOpenList.size())
+			{
+				FindNextPath = FindNextPathIndex(MakedOpenList);
+			}
+			else
+			{
+				FindNextPath = FindNextPathIndexFromOpenList();
+			}
+
+			if (FindNextPath == g_EndPos)
+				break;
+
+			std::remove(OpenList.begin(), OpenList.end(), FindNextPath);
+			ClosedList.push_back(FindNextPath);
 		}
 
-		Paths.push_back(Tiles[path_index].ParentTile);
-		path_index = Tiles[path_index].ParentTile;
-	}
 
-	ShowTile();
+		int path_index = g_EndPos;
+		Paths.push_back(g_EndPos);
+		while (1)
+		{
+			if (path_index == g_StartPos)
+			{
+				break;
+			}
+
+			Paths.push_back(Tiles[path_index].ParentTile);
+			path_index = Tiles[path_index].ParentTile;
+		}
+
+		ShowTile();
+	}
 }
