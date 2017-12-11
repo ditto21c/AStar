@@ -13,6 +13,7 @@ struct Tile
 	float PosY = 0;
 	bool bBlock = false;
 	int ParentTile = 0;
+	vector<int> OpenList;
 };
 
 vector<Tile> Tiles;
@@ -36,9 +37,8 @@ float CalcuHeuristic(int OpenPos, int EndPos)
 	return abs(Tiles[EndPos].PosX - Tiles[OpenPos].PosX) + abs(Tiles[EndPos].PosY - Tiles[OpenPos].PosY);
 }
 
-vector<int> PushOpenList(int StandardPos, int OpenPos)
+bool PushOpenList(int StandardPos, int OpenPos)
 {
-	vector<int> PushedOpenList;
 	vector<int>::iterator findClose = std::find(ClosedList.begin(), ClosedList.end(), OpenPos);
 	if (findClose == ClosedList.end())
 	{
@@ -51,17 +51,106 @@ vector<int> PushOpenList(int StandardPos, int OpenPos)
 			Tiles[OpenPos].Heuristic = CalcuHeuristic(OpenPos, g_EndPos);
 			Tiles[OpenPos].Fitness = Tiles[OpenPos].Goal + Tiles[OpenPos].Heuristic;
 			Tiles[OpenPos].ParentTile = StandardPos;
-			PushedOpenList.push_back(OpenPos);
+			return true;
 		}
 	}
 
-	return PushedOpenList;
+	return false;
+}
+
+
+vector<int> FindNearOpenList(int StandardPos)
+{
+	vector<int> FindedNearOpenList;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		int OpenPos = StandardPos - (TileSize + 1) + i;
+		if (0 <= OpenPos && OpenPos < TileSize*TileSize)
+		{
+			float XGap = abs(Tiles[StandardPos].PosX - Tiles[OpenPos].PosX);
+			float YGap = abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY);
+			if (XGap < 2.0f && YGap < 2.0f)
+			{
+				if (0 == i)
+				{
+					if (Tiles[OpenPos + 1].bBlock || Tiles[OpenPos + TileSize].bBlock)
+						continue;
+				}
+				else if (2 == i)
+				{
+					if (Tiles[OpenPos - 1].bBlock || Tiles[OpenPos + TileSize].bBlock)
+						continue;
+				}
+				FindedNearOpenList.push_back(OpenPos);
+			}
+		}
+	}
+
+	if (0 <= StandardPos - 1 && StandardPos - 1 < TileSize*TileSize)
+	{
+		int OpenPos = StandardPos - 1;
+		float XGap = abs(Tiles[StandardPos].PosX - Tiles[OpenPos].PosX);
+		float YGap = abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY);
+		if (XGap < 2.0f && YGap < 2.0f)
+		{
+			FindedNearOpenList.push_back(OpenPos);
+		}
+	}
+
+
+	if (0 <= StandardPos + 1 && StandardPos + 1 < TileSize*TileSize)
+	{
+		int OpenPos = StandardPos + 1;
+		float XGap = abs(Tiles[StandardPos].PosX - Tiles[OpenPos].PosX);
+		float YGap = abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY);
+		if (XGap < 2.0f && YGap < 2.0f)
+		{
+			FindedNearOpenList.push_back(OpenPos);
+		}
+	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		int OpenPos = StandardPos + (TileSize - 1) + i;
+		if (0 <= OpenPos && OpenPos < TileSize*TileSize)
+		{
+			float XGap = abs(Tiles[StandardPos].PosX - Tiles[OpenPos].PosX);
+			float YGap = abs(Tiles[StandardPos].PosY - Tiles[OpenPos].PosY);
+			if (XGap < 2.0f && YGap < 2.0f)
+			{
+				if (0 == i)
+				{
+					if (Tiles[OpenPos + 1].bBlock || Tiles[OpenPos - TileSize].bBlock)
+						continue;
+				}
+				else if (2 == i)
+				{
+					if (Tiles[OpenPos - 1].bBlock || Tiles[OpenPos - TileSize].bBlock)
+						continue;
+				}
+
+				FindedNearOpenList.push_back(OpenPos);
+			}
+		}
+	}
+
+	return FindedNearOpenList;
+
 }
 
 vector<int> MakeOpenList(int StandardPos)
 {
 	vector<int> MakedOpenList;
-	for (int i = 0; i < 3; ++i)
+
+	vector<int> finded_near_openlist = FindNearOpenList(StandardPos);
+	for (int open_pos : finded_near_openlist)
+	{
+		if (PushOpenList(StandardPos, open_pos))
+			MakedOpenList.push_back(open_pos);
+	}
+
+	/*for (int i = 0; i < 3; ++i)
 	{
 		int OpenPos = StandardPos - (TileSize+1) + i;
 		if (0 <= OpenPos && OpenPos < TileSize*TileSize)
@@ -139,7 +228,7 @@ vector<int> MakeOpenList(int StandardPos)
 					MakedOpenList.push_back(index);
 			}
 		}
-	}
+	}*/
 
 	return MakedOpenList;
 }
@@ -166,15 +255,20 @@ int FindNextPathIndex(const vector<int>& CheckOpenList)
 	float FindFitness = 999999999.0f;
 	for (int CurIndex : CheckOpenList)
 	{
-		if (Tiles[CurIndex].Fitness < FindFitness)
+		vector<int>::iterator itFind = std::find(ClosedList.begin(), ClosedList.end(), CurIndex);
+		if (itFind == ClosedList.end())
 		{
-			FindPath = CurIndex;
-			FindFitness = Tiles[CurIndex].Fitness;
+			if (Tiles[CurIndex].Fitness < FindFitness)
+			{
+				FindPath = CurIndex;
+				FindFitness = Tiles[CurIndex].Fitness;
+			}
 		}
 	}
 
 	return FindPath;
 }
+
 
 void ShowTile()
 {
@@ -213,6 +307,8 @@ void main()
 
 			if (y != 0 && y != 5 && y != 10 && x == 5)
 				tile.bBlock = true;
+			else if (x == 2 && 3 <= y && y <= 7)
+				tile.bBlock = true;
 
 			Tiles.push_back(tile);
 		}
@@ -232,6 +328,7 @@ void main()
 			{
 				ClosedList.push_back(TileSize * (int)tile.PosY + (int)tile.PosX);
 			}
+			tile.OpenList.clear();
 		}
 	
 		std::cout << "Select Start Position : " << endl;
@@ -248,11 +345,14 @@ void main()
 			vector<int> MakedOpenList = MakeOpenList(FindNextPath);
 			if (0 < MakedOpenList.size())
 			{
+				Tiles[FindNextPath].OpenList = MakedOpenList;
 				FindNextPath = FindNextPathIndex(MakedOpenList);
 			}
 			else
 			{
-				FindNextPath = FindNextPathIndexFromOpenList();
+				int ParentTile = Tiles[FindNextPath].ParentTile;
+				FindNextPath = FindNextPathIndex(Tiles[ParentTile].OpenList);
+				//FindNextPath = FindNextPathIndexFromOpenList();
 			}
 
 			if (FindNextPath == g_EndPos)
