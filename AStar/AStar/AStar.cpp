@@ -202,6 +202,7 @@ public:
 
 	void ShowTile()
 	{
+		
 		for (int y = 0; y < TileSize; ++y)
 		{
 			for (int x = 0; x < TileSize; ++x)
@@ -244,6 +245,61 @@ public:
 	void StartAStar(bool* pTile, int InTileSize)
 	{
 		MakeTiles(pTile, InTileSize);
+
+		for (Tile tile : Tiles)
+		{
+			if (tile.bBlock)
+			{
+				ClosedList.push_back(TileSize * (int)tile.PosY + (int)tile.PosX);
+			}
+		}
+
+		g_StartPos = 32;
+		g_EndPos = 26;
+
+		ClosedList.push_back(g_StartPos);
+		int FindNextPath = g_StartPos;
+
+		while (1)
+		{
+			vector<int> MakedOpenList = MakeOpenList(FindNextPath);
+			if (0 < MakedOpenList.size())
+			{
+				Tiles[FindNextPath].OpenList = MakedOpenList;
+				FindNextPath = FindNextPathIndex(MakedOpenList);
+			}
+			else
+			{
+				int ParentTile = Tiles[FindNextPath].ParentTile;
+				FindNextPath = FindNextPathIndex(Tiles[ParentTile].OpenList);
+				if (-1 == FindNextPath)
+					FindNextPath = FindNextPathIndexFromOpenList();
+			}
+
+			if (FindNextPath == g_EndPos)
+				break;
+
+			std::remove(OpenList.begin(), OpenList.end(), FindNextPath);
+			ClosedList.push_back(FindNextPath);
+		}
+
+
+		int path_index = g_EndPos;
+		Paths.push_back(g_EndPos);
+		while (1)
+		{
+			if (path_index == g_StartPos)
+			{
+				break;
+			}
+
+			Paths.push_back(Tiles[path_index].ParentTile);
+			path_index = Tiles[path_index].ParentTile;
+		}
+
+		ShowTile();
+
+		/*MakeTiles(pTile, InTileSize);
 
 		ShowTile();
 
@@ -328,6 +384,6 @@ public:
 			}
 
 			ShowTile();
-		}
+		}*/
 	}
 };

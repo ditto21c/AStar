@@ -20,7 +20,7 @@ int TileCount;
 
 void main()
 {
-	cout << "크기를 입력해주세요 : " << endl;
+	/*cout << "크기를 입력해주세요 : " << endl;
 	cin >> Size;
 
 	TileCount = Size * Size;
@@ -63,7 +63,23 @@ void main()
 			CAStar AStar;
 			AStar.StartAStar(Tile, Size);
 		}
-	}
+	}*/
+
+	Size = 10;
+	bool Tile[100] = {
+		true,  true,  true,   true,  true,	true,  true,  true,  true,  true,
+		false, false, false,  false, true,	false, false, false, false, false,
+		false, false, false,  false, true,	false, false, false, false, false,
+		false, false, false,  false, true,	false, false, false, false, false,
+		false, false, false,  false, true,	false, false, false, false, false,
+		false, false, false,  false, true,	false, false, false, false, false,
+		false, false, false,  false, false,	false, false, false, false, false,
+		false, false, false,  false, true,	false, false, false, false, false,
+	};
+	//ShowTile(Tile);
+
+	CAStar AStar;
+	AStar.StartAStar(Tile, Size);
 }
 
 void CreateTile(bool* Tile)
